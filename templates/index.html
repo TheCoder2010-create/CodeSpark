@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}AI Code Analyzer - Home{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold text-primary mb-4">
+                    AI-Powered Code Analysis
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Improve your code quality with intelligent suggestions, automated test generation, 
+                    and comprehensive code review insights powered by advanced AI.
+                </p>
+                <div class="d-flex gap-3 mb-5">
+                    <a href="{{ url_for('upload_page') }}" class="btn btn-primary btn-lg">
+                        <i data-feather="upload" class="me-2"></i>
+                        Upload Code
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary btn-lg">
+                        <i data-feather="bar-chart-2" class="me-2"></i>
+                        View Dashboard
+                    </a>
+                </div>
+                
+                <!-- Features -->
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon bg-primary text-white rounded-circle me-3">
+                                <i data-feather="zap"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">AI Analysis</h6>
+                                <small class="text-muted">Intelligent code quality assessment</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon bg-success text-white rounded-circle me-3">
+                                <i data-feather="check-square"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Test Generation</h6>
+                                <small class="text-muted">Automated test case suggestions</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon bg-warning text-white rounded-circle me-3">
+                                <i data-feather="eye"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Code Review</h6>
+                                <small class="text-muted">Professional review insights</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center">
+                            <div class="feature-icon bg-info text-white rounded-circle me-3">
+                                <i data-feather="trending-up"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Metrics</h6>
+                                <small class="text-muted">Detailed quality metrics</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="code-preview-card">
+                    <div class="code-header">
+                        <div class="code-header-controls">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="code-filename">example.py</span>
+                    </div>
+                    <pre><code class="language-python line-numbers">def fibonacci(n):
+    """Calculate fibonacci sequence up to n."""
+    if n <= 0:
+        return []
+    elif n == 1:
+        return [0]
+    elif n == 2:
+        return [0, 1]
+    
+    sequence = [0, 1]
+    for i in range(2, n):
+        sequence.append(sequence[i-1] + sequence[i-2])
+    
+    return sequence
+
+# Usage example
+result = fibonacci(10)
+print(f"Fibonacci sequence: {result}")
+</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Providers Showcase -->
+<div class="container mb-5">
+    <div class="card ai-showcase">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary mb-2">50+ AI Models from 9 Leading Providers</h3>
+                <p class="text-muted">Choose the perfect AI model for your code analysis needs</p>
+            </div>
+            
+            <div class="row g-3 provider-logos justify-content-center">
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">GPT</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">OpenAI</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Claude</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Anthropic</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-info text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Gemini</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Google</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-warning text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Grok</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">xAI</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Sonar</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Perplexity</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-dark text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Co</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Cohere</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-danger text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">Mis</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Mistral</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">🤗</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Hugging Face</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <div class="provider-logo-card text-center p-2">
+                        <div class="provider-icon bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                            <small class="fw-bold">T</small>
+                        </div>
+                        <small class="text-muted d-block mt-1">Together AI</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('providers_page') }}" class="btn btn-primary">
+                    <i data-feather="cpu" class="me-2"></i>
+                    Explore All Models
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recent_analyses %}
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="h3 mb-4">Recent Analyses</h2>
+            <div class="row g-4">
+                {% for analysis in recent_analyses %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card analysis-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="card-title mb-0">{{ analysis.original_filename }}</h6>
+                                <span class="badge bg-primary">{{ analysis.language or 'unknown' }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">Quality Score</small>
+                                    <span class="fw-bold text-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }}">
+                                        {{ analysis.quality_score or 0 }}%
+                                    </span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }}" 
+                                         style="width: {{ analysis.quality_score or 0 }}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between text-muted small mb-3">
+                                <span><i data-feather="alert-circle" class="me-1"></i>{{ analysis.issues_count or 0 }} issues</span>
+                                <span><i data-feather="lightbulb" class="me-1"></i>{{ analysis.suggestions_count or 0 }} suggestions</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                <a href="{{ url_for('view_analysis', analysis_id=analysis.id) }}" class="btn btn-sm btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

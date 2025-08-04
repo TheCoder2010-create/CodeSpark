@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Code Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-2">Analysis Dashboard</h1>
+            <p class="text-muted mb-0">Overview of your code analysis history and metrics</p>
+        </div>
+        <a href="{{ url_for('upload_page') }}" class="btn btn-primary">
+            <i data-feather="plus" class="me-2"></i>
+            New Analysis
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-primary">{{ total_analyses }}</div>
+                <div class="metric-label">Total Analyses</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-success">{{ avg_quality_score }}%</div>
+                <div class="metric-label">Avg Quality Score</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-warning">{{ total_issues }}</div>
+                <div class="metric-label">Total Issues</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-info">{{ language_stats|length }}</div>
+                <div class="metric-label">Languages</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Distribution -->
+    {% if language_stats %}
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="pie-chart" class="me-2"></i>
+                        Language Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for language, count in language_stats.items() %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="language-icon me-3">
+                                <span class="badge bg-primary">{{ language[:3]|upper }}</span>
+                            </div>
+                            <span class="fw-medium">{{ language|title }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="text-muted me-3">{{ count }} files</span>
+                            <div class="progress" style="width: 100px; height: 8px;">
+                                <div class="progress-bar bg-primary" style="width: {{ (count / total_analyses * 100)|round }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="activity" class="me-2"></i>
+                        Quick Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="stat-value text-success">
+                                    {{ (analyses|selectattr('quality_score', 'gt', 80)|list|length) }}
+                                </div>
+                                <div class="stat-label">High Quality</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="stat-value text-warning">
+                                    {{ (analyses|selectattr('quality_score', 'lt', 60)|list|length) }}
+                                </div>
+                                <div class="stat-label">Needs Work</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="stat-value text-info">
+                                    {{ (analyses|sum(attribute='suggestions_count', start=0)) }}
+                                </div>
+                                <div class="stat-label">Suggestions</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item text-center">
+                                <div class="stat-value text-primary">
+                                    {{ analyses|length }}
+                                </div>
+                                <div class="stat-label">Files Analyzed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Analysis History -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i data-feather="clock" class="me-2"></i>
+                    Analysis History
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="sortByDate">
+                        <i data-feather="calendar" class="me-1"></i>
+                        Sort by Date
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="sortByScore">
+                        <i data-feather="trending-up" class="me-1"></i>
+                        Sort by Score
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if analyses %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="analysisTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>File Name</th>
+                            <th>Language</th>
+                            <th>Quality Score</th>
+                            <th>Issues</th>
+                            <th>Suggestions</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for analysis in analyses %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i data-feather="file-text" class="me-2 text-muted"></i>
+                                    <div>
+                                        <div class="fw-medium">{{ analysis.original_filename }}</div>
+                                        <small class="text-muted">{{ "%.1f"|format(analysis.file_size / 1024) }}KB</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ analysis.language or 'unknown' }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold text-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }} me-2">
+                                        {{ analysis.quality_score or 0 }}%
+                                    </span>
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                        <div class="progress-bar bg-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }}" 
+                                             style="width: {{ analysis.quality_score or 0 }}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if analysis.issues_count and analysis.issues_count > 5 else 'warning' if analysis.issues_count and analysis.issues_count > 0 else 'success' }}">
+                                    {{ analysis.issues_count or 0 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ analysis.suggestions_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('view_analysis', analysis_id=analysis.id) }}" 
+                                       class="btn btn-outline-primary" title="View Analysis">
+                                        <i data-feather="eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('export_analysis', analysis_id=analysis.id) }}" 
+                                       class="btn btn-outline-secondary" title="Export JSON">
+                                        <i data-feather="download"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Are you sure you want to delete this analysis?')">
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i data-feather="trash-2"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i data-feather="folder" class="text-muted mb-3" size="48"></i>
+                <h5 class="text-muted">No analyses yet</h5>
+                <p class="text-muted mb-4">Upload your first code file to get started with AI-powered analysis.</p>
+                <a href="{{ url_for('upload_page') }}" class="btn btn-primary">
+                    <i data-feather="upload" class="me-2"></i>
+                    Upload Code
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('analysisTable');
+    const sortByDate = document.getElementById('sortByDate');
+    const sortByScore = document.getElementById('sortByScore');
+    
+    if (table && sortByDate && sortByScore) {
+        function sortTable(columnIndex, isNumeric = false) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const aVal = a.cells[columnIndex].textContent.trim();
+                const bVal = b.cells[columnIndex].textContent.trim();
+                
+                if (isNumeric) {
+                    const aNum = parseFloat(aVal.replace('%', '')) || 0;
+                    const bNum = parseFloat(bVal.replace('%', '')) || 0;
+                    return bNum - aNum; // Descending order
+                } else {
+                    return bVal.localeCompare(aVal); // Descending order for dates
+                }
+            });
+            
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        sortByDate.addEventListener('click', () => sortTable(5, false));
+        sortByScore.addEventListener('click', () => sortTable(2, true));
+    }
+});
+</script>
+{% endblock %}

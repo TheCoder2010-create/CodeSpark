@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - AI Code Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-2">AI Provider Settings</h1>
+            <p class="text-muted mb-0">Configure your AI providers and API keys for code analysis</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i data-feather="arrow-left" class="me-2"></i>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="settings" class="me-2"></i>
+                        AI Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('update_settings') }}" id="settingsForm">
+                        <!-- AI Provider Selection -->
+                        <div class="mb-4">
+                            <label for="ai_provider" class="form-label fw-bold">AI Provider</label>
+                            <select class="form-select" id="ai_provider" name="ai_provider" required>
+                                {% for provider_id, provider_info in providers.items() %}
+                                <option value="{{ provider_id }}" {% if settings.ai_provider == provider_id %}selected{% endif %}>
+                                    {{ provider_info.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose your preferred AI provider for code analysis</div>
+                        </div>
+
+                        <!-- AI Model Selection -->
+                        <div class="mb-4">
+                            <label for="ai_model" class="form-label fw-bold">Model</label>
+                            <select class="form-select" id="ai_model" name="ai_model" required>
+                                {% for provider_id, provider_info in providers.items() %}
+                                    {% for model_id, model_name in provider_info.models.items() %}
+                                    <option value="{{ model_id }}" 
+                                            data-provider="{{ provider_id }}"
+                                            {% if settings.ai_model == model_id %}selected{% endif %}
+                                            style="display: {% if settings.ai_provider == provider_id %}block{% else %}none{% endif %};">
+                                        {{ model_name }}
+                                    </option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Select the specific model to use for analysis</div>
+                        </div>
+
+                        <!-- API Keys Section -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">
+                                <i data-feather="key" class="me-2"></i>
+                                API Keys
+                            </h6>
+                            
+                            {% for provider_id, provider_info in providers.items() %}
+                            <div class="api-key-section mb-3" data-provider="{{ provider_id }}" 
+                                 style="display: {% if settings.ai_provider == provider_id %}block{% else %}none{% endif %};">
+                                <label for="{{ provider_info.api_key_env }}" class="form-label">
+                                    {{ provider_info.name }} API Key
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control api-key-input" 
+                                           id="{{ provider_info.api_key_env }}"
+                                           name="{{ provider_info.api_key_env }}"
+                                           value="{{ api_keys.get(provider_info.api_key_env, '') }}"
+                                           placeholder="Enter your {{ provider_info.name }} API key">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="{{ provider_info.api_key_env }}">
+                                        <i data-feather="eye" class="toggle-icon"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary validate-key" 
+                                            data-provider="{{ provider_id }}" 
+                                            data-field="{{ provider_info.api_key_env }}">
+                                        <i data-feather="check-circle" class="me-1"></i>
+                                        Validate
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Get your API key from the {{ provider_info.name }} dashboard
+                                </div>
+                                <div class="validation-result mt-2" id="validation-{{ provider_id }}" style="display: none;"></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="save" class="me-2"></i>
+                                Save Settings
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload()">
+                                <i data-feather="refresh-cw" class="me-2"></i>
+                                Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Current Configuration -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">Current Configuration</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-primary text-white rounded-circle me-3">
+                            <i data-feather="cpu"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">{{ providers[settings.ai_provider].name }}</div>
+                            <small class="text-muted">Current Provider</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-success text-white rounded-circle me-3">
+                            <i data-feather="zap"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">{{ providers[settings.ai_provider].models.get(settings.ai_model, settings.ai_model) }}</div>
+                            <small class="text-muted">Model</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon bg-{{ 'success' if api_keys.get(providers[settings.ai_provider].api_key_env) else 'warning' }} text-white rounded-circle me-3">
+                            <i data-feather="key"></i>
+                        </div>
+                        <div>
+                            <div class="fw-medium">
+                                {{ 'Configured' if api_keys.get(providers[settings.ai_provider].api_key_env) else 'Not Set' }}
+                            </div>
+                            <small class="text-muted">API Key Status</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Available Providers -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">Available Providers</h6>
+                </div>
+                <div class="card-body">
+                    {% for provider_id, provider_info in providers.items() %}
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="provider-icon me-3">
+                                <span class="badge bg-{{ 'primary' if provider_id == settings.ai_provider else 'light text-dark' }}">
+                                    {{ provider_info.name[:3]|upper }}
+                                </span>
+                            </div>
+                            <div>
+                                <div class="fw-medium">{{ provider_info.name }}</div>
+                                <small class="text-muted">{{ provider_info.models|length }} models</small>
+                            </div>
+                        </div>
+                        {% if provider_id == settings.ai_provider %}
+                        <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSettings();
+});
+
+function initializeSettings() {
+    const providerSelect = document.getElementById('ai_provider');
+    const modelSelect = document.getElementById('ai_model');
+    
+    // Handle provider change
+    providerSelect.addEventListener('change', function() {
+        const selectedProvider = this.value;
+        updateModelOptions(selectedProvider);
+        updateAPIKeySection(selectedProvider);
+    });
+
+    // Handle password visibility toggle
+    document.querySelectorAll('.toggle-password').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('.toggle-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-feather', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-feather', 'eye');
+            }
+            feather.replace();
+        });
+    });
+
+    // Handle API key validation
+    document.querySelectorAll('.validate-key').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const provider = this.getAttribute('data-provider');
+            const field = this.getAttribute('data-field');
+            const apiKey = document.getElementById(field).value;
+            
+            if (!apiKey.trim()) {
+                showValidationResult(provider, false, 'Please enter an API key');
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Validating...';
+            
+            fetch('/validate_api_key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    provider: provider,
+                    api_key: apiKey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                this.disabled = false;
+                this.innerHTML = '<i data-feather="check-circle" class="me-1"></i>Validate';
+                feather.replace();
+                
+                if (data.valid) {
+                    showValidationResult(provider, true, 'API key is valid!');
+                } else {
+                    showValidationResult(provider, false, data.error || 'Invalid API key');
+                }
+            })
+            .catch(error => {
+                this.disabled = false;
+                this.innerHTML = '<i data-feather="check-circle" class="me-1"></i>Validate';
+                feather.replace();
+                showValidationResult(provider, false, 'Validation failed: ' + error.message);
+            });
+        });
+    });
+}
+
+function updateModelOptions(selectedProvider) {
+    const modelSelect = document.getElementById('ai_model');
+    const options = modelSelect.querySelectorAll('option');
+    
+    options.forEach(function(option) {
+        const provider = option.getAttribute('data-provider');
+        if (provider === selectedProvider) {
+            option.style.display = 'block';
+            if (!modelSelect.value || modelSelect.querySelector('option:checked').getAttribute('data-provider') !== selectedProvider) {
+                option.selected = true;
+            }
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+function updateAPIKeySection(selectedProvider) {
+    const sections = document.querySelectorAll('.api-key-section');
+    sections.forEach(function(section) {
+        const provider = section.getAttribute('data-provider');
+        section.style.display = provider === selectedProvider ? 'block' : 'none';
+    });
+}
+
+function showValidationResult(provider, isValid, message) {
+    const resultDiv = document.getElementById('validation-' + provider);
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'validation-result mt-2 alert alert-' + (isValid ? 'success' : 'danger');
+    resultDiv.innerHTML = '<i data-feather="' + (isValid ? 'check-circle' : 'x-circle') + '" class="me-2"></i>' + message;
+    feather.replace();
+}
+</script>
+{% endblock %}

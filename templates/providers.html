@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}AI Providers & Models - AI Code Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-2">Available AI Providers & Models</h1>
+            <p class="text-muted mb-0">Choose from 9 AI providers with 50+ state-of-the-art language models</p>
+        </div>
+        <a href="{{ url_for('settings_page') }}" class="btn btn-primary">
+            <i data-feather="settings" class="me-2"></i>
+            Configure Settings
+        </a>
+    </div>
+
+    <!-- Provider Grid -->
+    <div class="row g-4">
+        {% set provider_colors = {
+            'openai': 'primary',
+            'anthropic': 'success', 
+            'gemini': 'info',
+            'xai': 'warning',
+            'perplexity': 'secondary',
+            'cohere': 'dark',
+            'mistral': 'danger',
+            'huggingface': 'primary',
+            'together': 'success'
+        } %}
+
+        {% for provider_id, provider_info in providers.items() %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="card h-100 provider-card">
+                <div class="card-header bg-{{ provider_colors.get(provider_id, 'light') }} text-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">
+                            <i data-feather="cpu" class="me-2"></i>
+                            {{ provider_info.name }}
+                        </h5>
+                        <span class="badge bg-light text-dark">{{ provider_info.models|length }} models</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted fw-semibold">API Key Required:</small>
+                        <code class="ms-2">{{ provider_info.api_key_env }}</code>
+                    </div>
+                    
+                    <h6 class="fw-bold mb-3">Available Models:</h6>
+                    <div class="model-list">
+                        {% for model_id, model_name in provider_info.models.items() %}
+                        <div class="model-item mb-2 p-2 border rounded">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <code class="text-primary">{{ model_id }}</code>
+                                    <div class="small text-muted">{{ model_name }}</div>
+                                </div>
+                                {% if loop.first %}
+                                <span class="badge bg-success">Latest</span>
+                                {% elif 'latest' in model_name.lower() or 'new' in model_name.lower() %}
+                                <span class="badge bg-info">New</span>
+                                {% elif 'beta' in model_name.lower() or 'preview' in model_name.lower() %}
+                                <span class="badge bg-warning">Beta</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <small class="text-muted">
+                            <i data-feather="package" class="me-1"></i>
+                            Dependencies: {{ provider_info.requires|join(', ') }}
+                        </small>
+                        <a href="#" class="btn btn-sm btn-outline-{{ provider_colors.get(provider_id, 'primary') }}" 
+                           onclick="selectProvider('{{ provider_id }}')">
+                            Select
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Usage Statistics -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="bar-chart-2" class="me-2"></i>
+                        Provider Categories & Use Cases
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="category-card bg-primary bg-opacity-10 p-3 rounded">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i data-feather="zap" class="me-2"></i>
+                                    Premium Models
+                                </h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li>• OpenAI GPT-4o</li>
+                                    <li>• Claude 4.0 Sonnet</li>
+                                    <li>• Gemini 2.5 Pro</li>
+                                    <li>• Best for complex analysis</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="category-card bg-success bg-opacity-10 p-3 rounded">
+                                <h6 class="fw-bold text-success mb-2">
+                                    <i data-feather="code" class="me-2"></i>
+                                    Code Specialists
+                                </h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li>• CodeLlama models</li>
+                                    <li>• Codestral</li>
+                                    <li>• WizardCoder</li>
+                                    <li>• Optimized for coding</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="category-card bg-info bg-opacity-10 p-3 rounded">
+                                <h6 class="fw-bold text-info mb-2">
+                                    <i data-feather="search" class="me-2"></i>
+                                    Research Enhanced
+                                </h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li>• Perplexity Sonar</li>
+                                    <li>• Real-time data access</li>
+                                    <li>• Web-connected analysis</li>
+                                    <li>• Latest best practices</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="category-card bg-warning bg-opacity-10 p-3 rounded">
+                                <h6 class="fw-bold text-warning mb-2">
+                                    <i data-feather="dollar-sign" class="me-2"></i>
+                                    Cost Effective
+                                </h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li>• GPT-3.5 Turbo</li>
+                                    <li>• Claude Haiku</li>
+                                    <li>• Gemini Flash</li>
+                                    <li>• Budget-friendly options</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Getting Started Guide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i data-feather="help-circle" class="me-2"></i>
+                        Getting Started
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">1. Choose Your Provider</h6>
+                            <p class="text-muted mb-3">Select an AI provider based on your needs and budget. Premium models offer better accuracy, while cost-effective options work well for basic analysis.</p>
+                            
+                            <h6 class="fw-bold">2. Get API Keys</h6>
+                            <p class="text-muted mb-3">Sign up with your chosen provider and obtain API keys. Most providers offer free tiers to get started.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">3. Configure Settings</h6>
+                            <p class="text-muted mb-3">Go to Settings to enter your API keys and select your preferred model. Keys are stored securely with encryption.</p>
+                            
+                            <h6 class="fw-bold">4. Start Analyzing</h6>
+                            <p class="text-muted mb-3">Upload your code files and get instant AI-powered analysis, test generation, and improvement suggestions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectProvider(providerId) {
+    // Redirect to settings with provider pre-selected
+    window.location.href = '/settings?provider=' + providerId;
+}
+</script>
+
+<style>
+.provider-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.provider-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.model-item {
+    background: var(--bs-gray-50);
+    border: 1px solid var(--bs-gray-200) !important;
+    transition: background-color 0.2s ease;
+}
+
+.model-item:hover {
+    background: var(--bs-gray-100);
+}
+
+.category-card {
+    height: 100%;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+[data-bs-theme="dark"] .model-item {
+    background: #1e293b;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .model-item:hover {
+    background: #334155;
+}
+
+[data-bs-theme="dark"] .category-card {
+    border-color: #334155;
+}
+</style>
+{% endblock %}

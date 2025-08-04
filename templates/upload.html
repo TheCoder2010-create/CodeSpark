@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Code - AI Code Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1 class="h2 fw-bold text-primary mb-3">Upload Your Code</h1>
+                <p class="lead text-muted">
+                    Upload your code files for AI-powered analysis and get comprehensive insights, 
+                    quality metrics, and improvement suggestions.
+                </p>
+            </div>
+
+            <div class="card upload-card">
+                <div class="card-body p-5">
+                    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <div class="upload-icon mb-3">
+                                    <i data-feather="upload-cloud" size="48"></i>
+                                </div>
+                                <h5 class="mb-2">Drag & drop your code file here</h5>
+                                <p class="text-muted mb-3">or click to browse files</p>
+                                <input type="file" name="file" id="fileInput" class="d-none" accept=".py,.js,.ts,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.swift,.kt,.scala,.sh,.sql,.html,.css,.json,.xml,.yaml,.yml,.txt,.md">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                    Choose File
+                                </button>
+                            </div>
+                            <div class="upload-progress d-none" id="uploadProgress">
+                                <div class="mb-3">
+                                    <i data-feather="file-text" class="me-2"></i>
+                                    <span id="fileName"></span>
+                                </div>
+                                <div class="progress mb-3">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                                </div>
+                                <p class="text-muted small">Processing your file...</p>
+                            </div>
+                        </div>
+
+                        <div class="file-info d-none" id="fileInfo">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i data-feather="info" class="me-2"></i>
+                                <div>
+                                    <strong>File selected:</strong> <span id="selectedFileName"></span><br>
+                                    <small class="text-muted">Click "Analyze Code" to start the AI analysis</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                <i data-feather="zap" class="me-2"></i>
+                                Analyze Code
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h6 class="fw-bold mb-3">
+                            <i data-feather="file-text" class="me-2 text-primary"></i>
+                            Supported File Types
+                        </h6>
+                        <div class="supported-types">
+                            <span class="badge bg-light text-dark me-2 mb-2">Python (.py)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">JavaScript (.js)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">TypeScript (.ts)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">Java (.java)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">C++ (.cpp)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">C# (.cs)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">PHP (.php)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">Go (.go)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">Rust (.rs)</span>
+                            <span class="badge bg-light text-dark me-2 mb-2">And more...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h6 class="fw-bold mb-3">
+                            <i data-feather="shield" class="me-2 text-success"></i>
+                            Analysis Features
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i data-feather="check" class="me-2 text-success" size="16"></i>
+                                Code quality assessment
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check" class="me-2 text-success" size="16"></i>
+                                Security vulnerability detection
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check" class="me-2 text-success" size="16"></i>
+                                Performance optimization tips
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check" class="me-2 text-success" size="16"></i>
+                                Automated test generation
+                            </li>
+                            <li class="mb-0">
+                                <i data-feather="check" class="me-2 text-success" size="16"></i>
+                                Best practices recommendations
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

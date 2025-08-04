@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - {{ analysis.original_filename }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-2">Analysis Results</h1>
+            <div class="d-flex align-items-center gap-3">
+                <span class="h5 mb-0">{{ analysis.original_filename }}</span>
+                <span class="badge bg-primary">{{ analysis.language or 'unknown' }}</span>
+                <span class="text-muted">{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('export_analysis', analysis_id=analysis.id) }}" class="btn btn-outline-secondary">
+                <i data-feather="download" class="me-1"></i>
+                Export JSON
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                <i data-feather="arrow-left" class="me-1"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Quality Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }}">
+                    {{ analysis.quality_score or 0 }}%
+                </div>
+                <div class="metric-label">Quality Score</div>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar bg-{{ 'success' if analysis.quality_score and analysis.quality_score >= 80 else 'warning' if analysis.quality_score and analysis.quality_score >= 60 else 'danger' }}" 
+                         style="width: {{ analysis.quality_score or 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-danger">{{ analysis.issues_count or 0 }}</div>
+                <div class="metric-label">Issues Found</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-info">{{ analysis.suggestions_count or 0 }}</div>
+                <div class="metric-label">Suggestions</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card text-center">
+                <div class="metric-value text-secondary">{{ "%.1f"|format(analysis.file_size / 1024) }}KB</div>
+                <div class="metric-label">File Size</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Tabs -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#code-tab" type="button">
+                        <i data-feather="code" class="me-1"></i>
+                        Source Code
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quality-tab" type="button">
+                        <i data-feather="check-circle" class="me-1"></i>
+                        Quality Analysis
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tests-tab" type="button">
+                        <i data-feather="play-circle" class="me-1"></i>
+                        Test Suggestions
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#improvements-tab" type="button">
+                        <i data-feather="trending-up" class="me-1"></i>
+                        Improvements
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="tab-content">
+                <!-- Source Code Tab -->
+                <div class="tab-pane fade show active" id="code-tab">
+                    <div class="code-viewer">
+                        <div class="code-header">
+                            <span class="code-filename">{{ analysis.original_filename }}</span>
+                            <div class="code-actions">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyCode()">
+                                    <i data-feather="copy" class="me-1"></i>
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                        <pre class="mb-0"><code class="language-{{ analysis.language or 'text' }} line-numbers" id="sourceCode">{{ code_content }}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Quality Analysis Tab -->
+                <div class="tab-pane fade" id="quality-tab">
+                    <div class="p-4">
+                        {% if analysis_result and analysis_result.quality_analysis %}
+                            {% set quality = analysis_result.quality_analysis %}
+                            
+                            <!-- Summary -->
+                            {% if quality.summary %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="file-text" class="me-2"></i>
+                                    Summary
+                                </h5>
+                                <div class="alert alert-info">
+                                    {{ quality.summary }}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Metrics -->
+                            {% if quality.metrics %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="bar-chart-2" class="me-2"></i>
+                                    Quality Metrics
+                                </h5>
+                                <div class="row g-3">
+                                    {% for metric, value in quality.metrics.items() %}
+                                    <div class="col-md-6">
+                                        <div class="metric-item">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-capitalize">{{ metric.replace('_', ' ') }}</span>
+                                                <strong class="text-primary">
+                                                    {% if value is number %}
+                                                        {{ value }}%
+                                                    {% else %}
+                                                        {{ value|title }}
+                                                    {% endif %}
+                                                </strong>
+                                            </div>
+                                            {% if value is number %}
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar bg-{{ 'success' if value >= 80 else 'warning' if value >= 60 else 'danger' }}" 
+                                                     style="width: {{ value }}%"></div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Issues -->
+                            {% if quality.issues %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="alert-triangle" class="me-2"></i>
+                                    Issues & Warnings
+                                </h5>
+                                {% for issue in quality.issues %}
+                                <div class="issue-item mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="issue-icon me-3">
+                                            <i data-feather="{{ 'x-circle' if issue.type == 'error' else 'alert-circle' if issue.type == 'warning' else 'info' }}" 
+                                               class="text-{{ 'danger' if issue.type == 'error' else 'warning' if issue.type == 'warning' else 'info' }}"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="mb-0">{{ issue.message }}</h6>
+                                                <div class="d-flex gap-2">
+                                                    <span class="badge bg-{{ 'danger' if issue.severity == 'high' else 'warning' if issue.severity == 'medium' else 'secondary' }}">
+                                                        {{ issue.severity|title }}
+                                                    </span>
+                                                    {% if issue.line %}
+                                                    <span class="badge bg-light text-dark">Line {{ issue.line }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if issue.suggestion %}
+                                            <p class="text-muted mb-0 small">
+                                                <strong>Suggestion:</strong> {{ issue.suggestion }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Recommendations -->
+                            {% if quality.recommendations %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="lightbulb" class="me-2"></i>
+                                    Recommendations
+                                </h5>
+                                <ul class="list-group list-group-flush">
+                                    {% for recommendation in quality.recommendations %}
+                                    <li class="list-group-item px-0">
+                                        <i data-feather="arrow-right" class="me-2 text-primary"></i>
+                                        {{ recommendation }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="alert-circle" class="text-muted mb-3" size="48"></i>
+                            <h5 class="text-muted">No quality analysis available</h5>
+                            <p class="text-muted">The analysis may still be processing or encountered an error.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Test Suggestions Tab -->
+                <div class="tab-pane fade" id="tests-tab">
+                    <div class="p-4">
+                        {% if test_suggestions and test_suggestions.test_cases %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="check-square" class="me-2"></i>
+                                    Recommended Test Framework: {{ test_suggestions.test_framework or 'Standard Testing' }}
+                                </h5>
+                            </div>
+
+                            <!-- Test Cases -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">Generated Test Cases</h6>
+                                {% for test in test_suggestions.test_cases %}
+                                <div class="test-case-item mb-4">
+                                    <div class="test-header mb-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ test.name }}</h6>
+                                            <span class="badge bg-{{ 'danger' if test.priority == 'high' else 'warning' if test.priority == 'medium' else 'secondary' }}">
+                                                {{ test.priority|title }} Priority
+                                            </span>
+                                        </div>
+                                        <p class="text-muted small mb-0">{{ test.description }}</p>
+                                    </div>
+                                    <div class="test-code">
+                                        <pre><code class="language-{{ analysis.language or 'text' }}">{{ test.test_code }}</code></pre>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Coverage Suggestions -->
+                            {% if test_suggestions.coverage_suggestions %}
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">Coverage Suggestions</h6>
+                                <ul class="list-group">
+                                    {% for suggestion in test_suggestions.coverage_suggestions %}
+                                    <li class="list-group-item">
+                                        <i data-feather="target" class="me-2 text-info"></i>
+                                        {{ suggestion }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <!-- Mocking Suggestions -->
+                            {% if test_suggestions.mocking_suggestions %}
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">Mocking Suggestions</h6>
+                                <ul class="list-group">
+                                    {% for suggestion in test_suggestions.mocking_suggestions %}
+                                    <li class="list-group-item">
+                                        <i data-feather="layers" class="me-2 text-warning"></i>
+                                        {{ suggestion }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="play-circle" class="text-muted mb-3" size="48"></i>
+                            <h5 class="text-muted">No test suggestions available</h5>
+                            <p class="text-muted">Test generation may still be processing or encountered an error.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Improvements Tab -->
+                <div class="tab-pane fade" id="improvements-tab">
+                    <div class="p-4">
+                        {% if analysis_result and analysis_result.code_suggestions %}
+                            {% set suggestions = analysis_result.code_suggestions %}
+                            
+                            <!-- Refactoring Suggestions -->
+                            {% if suggestions.refactoring_suggestions %}
+                            <div class="mb-4">
+                                <h5 class="fw-bold mb-3">
+                                    <i data-feather="edit-3" class="me-2"></i>
+                                    Code Improvements
+                                </h5>
+                                {% for suggestion in suggestions.refactoring_suggestions %}
+                                <div class="improvement-item mb-4">
+                                    <div class="improvement-header mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">{{ suggestion.description }}</h6>
+                                            <span class="badge bg-primary">{{ suggestion.category|title }}</span>
+                                        </div>
+                                        <p class="text-muted small mb-0">{{ suggestion.explanation }}</p>
+                                    </div>
+                                    
+                                    {% if suggestion.before_code and suggestion.after_code %}
+                                    <div class="code-comparison">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="small fw-bold text-danger mb-2">
+                                                    <i data-feather="minus" class="me-1"></i>
+                                                    Before
+                                                </h6>
+                                                <pre class="bg-light-danger"><code class="language-{{ analysis.language or 'text' }}">{{ suggestion.before_code }}</code></pre>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="small fw-bold text-success mb-2">
+                                                    <i data-feather="plus" class="me-1"></i>
+                                                    After
+                                                </h6>
+                                                <pre class="bg-light-success"><code class="language-{{ analysis.language or 'text' }}">{{ suggestion.after_code }}</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <!-- Architecture Suggestions -->
+                            {% if suggestions.architecture_suggestions %}
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">Architecture Recommendations</h6>
+                                <ul class="list-group">
+                                    {% for suggestion in suggestions.architecture_suggestions %}
+                                    <li class="list-group-item">
+                                        <i data-feather="layers" class="me-2 text-primary"></i>
+                                        {{ suggestion }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            <!-- Dependency Suggestions -->
+                            {% if suggestions.dependency_suggestions %}
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">Library & Framework Recommendations</h6>
+                                <ul class="list-group">
+                                    {% for suggestion in suggestions.dependency_suggestions %}
+                                    <li class="list-group-item">
+                                        <i data-feather="package" class="me-2 text-success"></i>
+                                        {{ suggestion }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i data-feather="trending-up" class="text-muted mb-3" size="48"></i>
+                            <h5 class="text-muted">No improvement suggestions available</h5>
+                            <p class="text-muted">Code suggestions may still be processing or encountered an error.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyCode() {
+    const code = document.getElementById('sourceCode').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        // Show temporary success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Copied!';
+        feather.replace();
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            feather.replace();
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
